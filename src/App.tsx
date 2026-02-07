@@ -14,9 +14,26 @@ function App() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [memoryCount, setMemoryCount] = useState(6); // Default to Chaos Mode (Level 3)
   const [logs, setLogs] = useState<string[]>([]); // System logs
+  const [isExploding, setIsExploding] = useState(false); // Explosion trigger
 
   // Calculate memory level (0, 1, 2)
   const memoryLevel = memoryCount < 3 ? 0 : memoryCount < 6 ? 1 : 2;
+
+  // Glitched Voice Synthesis
+  const speak = (text: string) => {
+    if (!window.speechSynthesis) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.pitch = 0.5 + Math.random() * 0.5; // Deep robotic pitch
+    utterance.rate = 0.8 + Math.random() * 0.4;  // Unstable speed
+    utterance.volume = 1.0;
+    // Try to find a robotic voice
+    const voices = window.speechSynthesis.getVoices();
+    const robotVoice = voices.find(v => v.name.includes('Google') || v.name.includes('Desktop')) || voices[0];
+    if (robotVoice) utterance.voice = robotVoice;
+    
+    window.speechSynthesis.cancel(); // Stop previous
+    window.speechSynthesis.speak(utterance);
+  };
 
   // Hack-style log generator
   const addLog = (msg: string) => {
@@ -40,6 +57,9 @@ function App() {
     const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2570/2570-preview.mp3');
     audio.volume = 0.5;
     audio.play().catch(() => {}); // Ignore autoplay errors
+    
+    // Speak status
+    speak(mode === 'retrieve' ? "Accessing Neural Network" : "Initiating Memory Sequence");
 
     // Fake Hacking Logs
     const fakeLogs = [
@@ -68,9 +88,11 @@ function App() {
       if (mode === 'retrieve') {
         const result = await memuApi.retrieve(query);
         setMemories(result.items);
+        speak("Memory Fragments Found");
       } else {
         await memuApi.memorize(query);
         setStatusMessage("MEMORY_FRAGMENT_STORED_SUCCESSFULLY");
+        speak("Memory Stored Successfully");
         setMemoryCount(prev => prev + 1); // Increase memory count on save
         
         // Level Up Sound if evolved
@@ -100,14 +122,21 @@ function App() {
     }
   };
 
+  const handleCoreClick = () => {
+      setIsExploding(true);
+      speak("System Critical. Explosion Imminent.");
+      // Reset explosion after animation
+      setTimeout(() => setIsExploding(false), 500);
+  };
+
   return (
     <div className={`relative w-full h-full bg-black text-cyan-400 font-mono overflow-hidden ${memoryLevel === 2 ? 'chaos-mode' : ''} ${isGlitching && memoryLevel === 2 ? 'chaos-flash' : ''}`}>
       {/* 3D Scene Background */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 cursor-pointer" onClick={handleCoreClick}>
         <Canvas camera={{ position: [0, 0, 8], fov: 60 }}>
           <color attach="background" args={['#050505']} />
           <ambientLight intensity={0.5} />
-          <GlitchCore isGlitching={isGlitching} intensity={loading ? 2.5 : 0.5} memoryLevel={memoryLevel} />
+          <GlitchCore isGlitching={isGlitching} isExploding={isExploding} intensity={loading ? 2.5 : 0.5} memoryLevel={memoryLevel} />
           <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={0.5 + (memoryLevel * 0.5)} />
         </Canvas>
       </div>

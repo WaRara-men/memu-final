@@ -4,11 +4,12 @@ import * as THREE from 'three';
 
 interface GlitchCoreProps {
   isGlitching: boolean;
+  isExploding?: boolean;
   intensity: number;
   memoryLevel?: number; // 0, 1, 2
 }
 
-export const GlitchCore: React.FC<GlitchCoreProps> = ({ isGlitching, intensity, memoryLevel = 0 }) => {
+export const GlitchCore: React.FC<GlitchCoreProps> = ({ isGlitching, isExploding = false, intensity, memoryLevel = 0 }) => {
   const mesh = useRef<THREE.Points>(null!);
   
   // Audio Analyzer Setup
@@ -79,9 +80,13 @@ export const GlitchCore: React.FC<GlitchCoreProps> = ({ isGlitching, intensity, 
           const ix = i * 3;
           const iy = i * 3 + 1;
           const iz = i * 3 + 2;
+          
+          const shouldScatter = isGlitching || audioLevel > 0.5 || isExploding;
 
-          if (isGlitching || audioLevel > 0.5) { // Glitch OR Loud noise triggers scatter
-              const scatter = isGlitching ? intensity : audioLevel * 2;
+          if (shouldScatter) { // Glitch OR Loud noise OR Click triggers scatter
+              let scatter = isGlitching ? intensity : audioLevel * 2;
+              if (isExploding) scatter = 5.0; // Massive explosion
+
               // Scatter randomly
               positionsAttribute.setX(i, originalPositions[ix] + (Math.random() - 0.5) * scatter);
               positionsAttribute.setY(i, originalPositions[iy] + (Math.random() - 0.5) * scatter);
