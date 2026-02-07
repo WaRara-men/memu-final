@@ -72,7 +72,7 @@ function App() {
         <header className="w-full max-w-4xl flex justify-between items-center opacity-80">
             <div className="flex items-center gap-2">
                 <BrainCircuit className="w-8 h-8 text-cyan-400 animate-pulse" />
-                <h1 className="text-2xl font-bold tracking-widest uppercase glow-text">MemU Core V.3</h1>
+                <h1 className="text-2xl font-bold tracking-widest uppercase glow-text">俺の最強AI</h1>
             </div>
             <div className="text-xs text-cyan-700 border border-cyan-900 px-2 py-1 rounded">SYSTEM: ONLINE</div>
         </header>
