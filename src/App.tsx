@@ -12,6 +12,10 @@ function App() {
   const [isGlitching, setIsGlitching] = useState(false);
   const [mode, setMode] = useState<'retrieve' | 'memorize'>('retrieve');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [memoryCount, setMemoryCount] = useState(0); // Track total memories
+
+  // Calculate memory level (0, 1, 2)
+  const memoryLevel = memoryCount < 3 ? 0 : memoryCount < 6 ? 1 : 2;
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,6 +25,11 @@ function App() {
     setIsGlitching(true);
     setMemories([]);
     setStatusMessage(null);
+
+    // Sound Effect: Glitch Noise
+    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2570/2570-preview.mp3');
+    audio.volume = 0.5;
+    audio.play().catch(() => {}); // Ignore autoplay errors
 
     try {
       // Simulate "scanning" delay for visual effect
@@ -32,6 +41,14 @@ function App() {
       } else {
         await memuApi.memorize(query);
         setStatusMessage("MEMORY_FRAGMENT_STORED_SUCCESSFULLY");
+        setMemoryCount(prev => prev + 1); // Increase memory count on save
+        
+        // Level Up Sound if evolved
+        if (memoryCount === 2 || memoryCount === 5) {
+             const levelUpAudio = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
+             levelUpAudio.play().catch(() => {});
+        }
+
         setQuery(''); // Clear input after save
       }
     } catch (err) {
@@ -60,8 +77,8 @@ function App() {
         <Canvas camera={{ position: [0, 0, 8], fov: 60 }}>
           <color attach="background" args={['#050505']} />
           <ambientLight intensity={0.5} />
-          <GlitchCore isGlitching={isGlitching} intensity={loading ? 2.5 : 0.5} />
-          <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={0.5} />
+          <GlitchCore isGlitching={isGlitching} intensity={loading ? 2.5 : 0.5} memoryLevel={memoryLevel} />
+          <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={0.5 + (memoryLevel * 0.5)} />
         </Canvas>
       </div>
 
@@ -71,10 +88,12 @@ function App() {
         {/* Header */}
         <header className="w-full max-w-4xl flex justify-between items-center opacity-80">
             <div className="flex items-center gap-2">
-                <BrainCircuit className="w-8 h-8 text-cyan-400 animate-pulse" />
-                <h1 className="text-2xl font-bold tracking-widest uppercase glow-text">俺の最強AI Ver.2</h1>
+                <BrainCircuit className={`w-8 h-8 ${memoryLevel === 2 ? 'text-red-500 animate-bounce' : memoryLevel === 1 ? 'text-purple-500 animate-pulse' : 'text-cyan-400 animate-pulse'}`} />
+                <h1 className={`text-2xl font-bold tracking-widest uppercase glow-text ${memoryLevel === 2 ? 'text-red-500' : memoryLevel === 1 ? 'text-purple-400' : ''}`}>俺の最強AI Ver.2</h1>
             </div>
-            <div className="text-xs text-cyan-700 border border-cyan-900 px-2 py-1 rounded">SYSTEM: ONLINE</div>
+            <div className="text-xs text-cyan-700 border border-cyan-900 px-2 py-1 rounded">
+                SYSTEM: {memoryLevel === 2 ? 'CRITICAL (LV.3)' : memoryLevel === 1 ? 'EVOLVING (LV.2)' : 'ONLINE (LV.1)'}
+            </div>
         </header>
 
         {/* Results Area (Middle) */}
